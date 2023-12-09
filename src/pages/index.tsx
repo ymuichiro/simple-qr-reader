@@ -12,12 +12,20 @@ async function addressCheck(json: string): Promise<{ result: boolean; address: s
   const result = await new BalanceService(address)
     .isBalance(100)
     .catch((e) => Promise.reject({ result: false, address, message: `残高を取得できません ${e}` }));
-  return { result, address, message: "" };
+
+  if (result) {
+    return { result, address, message: "" };
+  } else {
+    return { result, address, message: "残高が不足しています" };
+  }
 }
 
 const QrCodeReader: FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mountedRef = useRef<boolean>(false);
+  const [isLock, setIsLock] = React.useState<boolean>(false);
+  const [address, setAddress] = React.useState<string>("");
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -27,31 +35,34 @@ const QrCodeReader: FC = () => {
         return;
       }
       if (typeof result !== "undefined") {
+        controls.stop();
+        setIsLock(true);
+        setIsLoading(true);
         addressCheck(result.getText())
-          .then((e) => {
+          .then(async (e) => {
             if (e.result) {
-              fetch(
+              const res = await fetch(
                 "https://script.google.com/macros/s/AKfycbzcloiFzSZTbUD0DCpVR_mRlkoZbH6dalz53NMIqGAX7WC77oXW6_7PyQIzw1WEwAZh_A/exec",
                 { method: "POST", body: JSON.stringify({ address: e.address }) }
-              )
-                .then((e) => e.json())
-                .then((e) => {
-                  if (e.message === 200) {
-                    alert(`OK: ${e.message} ${new URL(`accounts/${e.address}`, config.explorer).href}`);
-                  } else {
-                    alert(
-                      `NG: このアドレスはお申し込みされていません ${
-                        new URL(`accounts/${e.address}`, config.explorer).href
-                      }`
-                    );
-                  }
-                });
+              );
+              const json = await res.json();
+              setAddress(`${new URL(`accounts/${e.address}`, config.explorer).href}`);
+              if (json.message === "200") {
+                setIsLoading(false);
+                alert(`OK`);
+              } else {
+                setIsLoading(false);
+                alert(`NG: このアドレスはお申し込みされていません ${e.message}`);
+              }
             } else {
+              setIsLoading(false);
               alert(`NG: ${e.message} ${new URL(`accounts/${e.address}`, config.explorer).href}`);
             }
           })
           .catch((err) => {
-            alert(`NG: ${err.message} ${new URL(`accounts/${err.address}`, config.explorer).href}`);
+            setAddress(`${new URL(`accounts/${err.address}`, config.explorer).href}`);
+            setIsLoading(false);
+            alert(`NG: ${err.message}`);
           });
       }
     });
@@ -61,29 +72,30 @@ const QrCodeReader: FC = () => {
   }, []);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-      }}
-    >
-      <video
-        style={{
-          width: "90%",
-          maxWidth: "1000px",
-          borderRadius: "10px",
-          marginTop: "1em",
-          marginBottom: "1em",
-        }}
-        ref={videoRef}
-      />
+    <div className="flex justify-start items-center flex-col max-w-full pt-4">
+      {isLock ? (
+        <div className="flex flex-col justify-center items-center gap-1">
+          <a href={address} className="underline text-blue-700">
+            {isLoading ? "照会中..." : "Explorer で確認"}
+          </a>
+          <button
+            className="bg-purple-700 text-white hover:bg-purple-700/90 h-10 px-4 py-2 rounded-md"
+            onClick={() => window.location.reload()}
+          >
+            新たに読み込む
+          </button>
+        </div>
+      ) : (
+        <>
+          <video className="w-11/12 max-w-5xl my-4 rounded-lg" ref={videoRef} />
+          <button
+            className="bg-purple-700 text-white hover:bg-purple-700/90 h-10 px-4 py-2 rounded-md"
+            onClick={() => window.location.reload()}
+          >
+            更新
+          </button>
+        </>
+      )}
     </div>
   );
 };

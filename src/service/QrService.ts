@@ -3,9 +3,14 @@ import { pubKeyToAddress } from "../util/pubkey_to_address";
 
 export class QrService {
   static async getAddress(json: any): Promise<string> {
-    const parsed = JSON.parse(json);
-    if (typeof parsed === "string") {
-      return parsed;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(json);
+      if (typeof parsed === "string") {
+        return Promise.resolve(parsed);
+      }
+    } catch (_) {
+      return Promise.resolve(json);
     }
 
     if (typeof parsed !== "object") {
@@ -19,10 +24,10 @@ export class QrService {
       return this.forType3(parsed);
     } else if (parsed.type === 7) {
       return this.forType7(parsed);
+    } else {
+      console.error("invalid type", parsed);
+      return Promise.reject("予期しない QRコードタイプが渡されました");
     }
-
-    console.error("invalid type", parsed);
-    return Promise.reject("予期しない QRコードタイプが渡されました");
   }
 
   private static async forType1(json: any): Promise<string> {
