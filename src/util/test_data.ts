@@ -17,7 +17,7 @@ export const TEST_DATA: any[] = [
     network_id: 104,
     chain_id: "57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6",
     data: {
-      name: "kokyu05決済用",
+      name: "any",
       address: "NCVRAEIRMASEUW3B5254PXSPLRUYKEU27NGKVPI",
     },
   },
@@ -50,7 +50,7 @@ export const TEST_DATA: any[] = [
     network_id: 104,
     chain_id: "57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6",
     data: {
-      name: "nononon",
+      name: "name",
       publicKey: "FCD0376AF326731572CFC09912EA94F88C6D06DA4EF6BD84B00B97B45149B0F6",
     },
   },
