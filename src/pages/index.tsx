@@ -30,7 +30,22 @@ const QrCodeReader: FC = () => {
         addressCheck(result.getText())
           .then((e) => {
             if (e.result) {
-              alert(`OK: ${e.message} ${new URL(`accounts/${e.address}`, config.explorer).href}`);
+              fetch(
+                "https://script.google.com/macros/s/AKfycbzcloiFzSZTbUD0DCpVR_mRlkoZbH6dalz53NMIqGAX7WC77oXW6_7PyQIzw1WEwAZh_A/exec",
+                { method: "POST", body: JSON.stringify({ address: e.address }) }
+              )
+                .then((e) => e.json())
+                .then((e) => {
+                  if (e.message === 200) {
+                    alert(`OK: ${e.message} ${new URL(`accounts/${e.address}`, config.explorer).href}`);
+                  } else {
+                    alert(
+                      `NG: このアドレスはお申し込みされていません ${
+                        new URL(`accounts/${e.address}`, config.explorer).href
+                      }`
+                    );
+                  }
+                });
             } else {
               alert(`NG: ${e.message} ${new URL(`accounts/${e.address}`, config.explorer).href}`);
             }
